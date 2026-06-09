@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin — AccountsPro Intake</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
+
+    :root {
+      --brand: #1a56db;
+      --brand-light: #e8f0fe;
+      --surface: #ffffff;
+      --bg: #f5f7fa;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --radius: 10px;
+      --shadow: 0 2px 12px rgba(0,0,0,.08);
+      --danger: #dc2626;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Login screen ── */
+    .login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 24px;
+    }
+    .login-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 48px 40px;
+      max-width: 400px; width: 100%;
+      text-align: center;
+    }
+    .login-card h1 { font-size: 1.5rem; margin-bottom: 8px; }
+    .login-card p  { color: var(--muted); font-size: .9rem; margin-bottom: 28px; }
+    .btn-google {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 12px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); cursor: pointer;
+      font-size: .95rem; font-weight: 500;
+      transition: background .15s;
+    }
+    .btn-google:hover { background: var(--bg); }
+    .login-error {
+      margin-top: 16px; color: var(--danger); font-size: .85rem;
+    }
+
+    /* ── App shell ── */
+    .app { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 220px; background: #1e293b; color: #e2e8f0;
+      padding: 28px 20px; flex-shrink: 0;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-logo { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 32px; }
+    .sidebar-logo span { color: #60a5fa; }
+    .sidebar nav a {
+      display: block; color: #94a3b8; text-decoration: none;
+      padding: 8px 12px; border-radius: 6px; font-size: .9rem; margin-bottom: 4px;
+      transition: background .15s, color .15s;
+    }
+    .sidebar nav a:hover, .sidebar nav a.active { background: #334155; color: #fff; }
+    .sidebar-footer { margin-top: auto; }
+    .btn-signout {
+      width: 100%; background: transparent; border: 1px solid #334155;
+      color: #94a3b8; padding: 8px; border-radius: 6px;
+      cursor: pointer; font-size: .85rem; transition: background .15s;
+    }
+    .btn-signout:hover { background: #334155; color: #fff; }
+
+    .main { flex: 1; padding: 36px 40px; overflow-y: auto; }
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .page-header h2 { font-size: 1.4rem; font-weight: 700; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px; border-radius: var(--radius);
+      font-size: .9rem; font-weight: 600; cursor: pointer;
+      border: none; transition: background .15s, opacity .15s;
+    }
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-primary:hover { background: #1346b8; }
+    .btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--bg); }
+
+    /* ── Client cards ── */
+    .client-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .client-card {
+      background: var(--surface); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 20px;
+    }
+    .client-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .client-card-logo { width: 40px; height: 40px; border-radius: 6px; object-fit: contain; background: var(--bg); }
+    .client-card-logo-placeholder {
+      width: 40px; height: 40px; border-radius: 6px;
+      background: var(--brand-light); display: flex; align-items: center;
+      justify-content: center; font-size: 1.2rem; font-weight: 700; color: var(--brand);
+      flex-shrink: 0;
+    }
+    .client-card h3 { font-size: 1rem; font-weight: 600; }
+    .client-card .slug { font-size: .8rem; color: var(--muted); }
+    .client-url {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg); border-radius: 6px; padding: 8px 10px;
+      font-size: .78rem; color: var(--muted); margin-bottom: 12px;
+    }
+    .client-url span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .btn-copy {
+      background: none; border: none; cursor: pointer; color: var(--brand);
+      font-size: .78rem; font-weight: 600; flex-shrink: 0;
+    }
+    .client-card-actions { display: flex; gap: 8px; }
+    .btn-sm {
+      padding: 6px 12px; font-size: .8rem; font-weight: 500;
+      border-radius: 6px; cursor: pointer; border: 1px solid var(--border);
+      background: var(--surface); transition: background .15s;
+    }
+    .btn-sm:hover { background: var(--bg); }
+    .badge-inactive {
+      font-size: .72rem; background: #fee2e2; color: #991b1b;
+      padding: 2px 8px; border-radius: 99px; margin-left: 8px;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center; padding: 60px 20px; color: var(--muted);
+    }
+    .empty-state p { font-size: 1rem; margin-top: 12px; }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.4);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 20px;
+    }
+    .modal {
+      background: var(--surface); border-radius: var(--radius);
+      box-shadow: 0 8px 32px rgba(0,0,0,.2);
+      padding: 32px; max-width: 480px; width: 100%;
+    }
+    .modal h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: .85rem; font-weight: 500; margin-bottom: 5px; }
+    .form-group input[type="text"],
+    .form-group input[type="email"] {
+      width: 100%; border: 1px solid var(--border); border-radius: 6px;
+      padding: 9px 12px; font-size: .9rem; font-family: inherit;
+    }
+    .form-group input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(26,86,219,.12); }
+    .form-hint { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+    .modal-error { color: var(--danger); font-size: .85rem; margin-top: 10px; }
+
+    /* ── Loading ── */
+    .spinner {
+      display: inline-block; width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+      border-radius: 50%; animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <h1>AccountsPro Admin</h1>
+    <p>Sign in to manage your client intake forms</p>
+    <button class="btn-google" id="btn-google-signin">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+    <div id="login-error" class="login-error" hidden></div>
+  </div>
+</div>
+
+<!-- APP (shown after auth) -->
+<div id="app" class="app" hidden>
+  <aside class="sidebar">
+    <div class="sidebar-logo">Accounts<span>Pro</span></div>
+    <nav>
+      <a href="#" class="active">Clients</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div id="admin-email" style="font-size:.78rem;color:#64748b;margin-bottom:10px;"></div>
+      <button class="btn-signout" id="btn-signout">Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <h2>Clients</h2>
+      <button class="btn btn-primary" id="btn-add-client">
+        + Add New Client
+      </button>
+    </div>
+
+    <div id="clients-loading" style="color:var(--muted);padding:20px 0;">Loading…</div>
+    <div id="client-grid" class="client-grid" hidden></div>
+    <div id="empty-state" class="empty-state" hidden>
+      <div style="font-size:2.5rem;">📁</div>
+      <p>No clients yet. Click "Add New Client" to create your first intake form.</p>
+    </div>
+  </main>
+</div>
+
+<!-- ADD / EDIT CLIENT MODAL -->
+<div id="modal-backdrop" class="modal-backdrop" hidden>
+  <div class="modal">
+    <h3 id="modal-title">Add New Client</h3>
+    <div class="form-group">
+      <label for="m-name">Client name *</label>
+      <input type="text" id="m-name" placeholder="e.g. Acme Corp">
+    </div>
+    <div class="form-group" id="slug-group">
+      <label for="m-slug">URL slug *</label>
+      <input type="text" id="m-slug" placeholder="e.g. acme-corp">
+      <div class="form-hint">This becomes the URL: <strong>intake.accountspro.net/<span id="slug-preview">acme-corp</span>/</strong></div>
+    </div>
+    <div class="form-group">
+      <label for="m-logo">Logo <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+      <input type="file" id="m-logo" accept="image/*">
+    </div>
+    <div id="modal-error" class="modal-error" hidden></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btn-modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="btn-modal-save">Create Client</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js?v=1"></script>
+<script>
+const SUPABASE_URL  = "https://nkjuodujynwddnqfigtg.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ranVvZHVqeW53ZGRucWZpZ3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1ODk4MjksImV4cCI6MjA5NjE2NTgyOX0.RdKe1RLGmASdf3ip8_IH19pINuVjU6jkyZAWU41FqAU";
+const ADMIN_EMAIL   = "carmen@accountspro.net";
+const BASE_URL      = "https://intake.accountspro.net";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const $ = id => document.getElementById(id);
+
+// ── Auth ─────────────────────────────────────────────────────
+$("btn-google-signin").addEventListener("click", async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: window.location.href }
+  });
+  if (error) showLoginError(error.message);
+});
+
+$("btn-signout").addEventListener("click", async () => {
+  await supabase.auth.signOut();
+  location.reload();
+});
+
+supabase.auth.onAuthStateChange(async (event, session) => {
+  if (!session) { showLogin(); return; }
+  if (session.user.email !== ADMIN_EMAIL) {
+    await supabase.auth.signOut();
+    showLoginError("Access denied. Only the admin account may log in.");
+    return;
+  }
+  showApp(session.user);
+});
+
+function showLogin() {
+  $("login-screen").hidden = false;
+  $("app").hidden = true;
+}
+function showLoginError(msg) {
+  const el = $("login-error");
+  el.textContent = msg;
+  el.hidden = false;
+}
+function showApp(user) {
+  $("login-screen").hidden = true;
+  $("app").hidden = false;
+  $("admin-email").textContent = user.email;
+  loadClients();
+}
+
+// ── Load clients ─────────────────────────────────────────────
+async function loadClients() {
+  $("clients-loading").hidden = false;
+  $("client-grid").hidden = true;
+  $("empty-state").hidden = true;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*&order=created_at.desc`, {
+    headers: {
+      apikey: SUPABASE_ANON,
+      Authorization: `Bearer ${session.access_token}`,
+    }
+  });
+  // Note: this will 403 for anon — needs service role via edge function
+  // For now we use the admin's JWT which passes RLS if we add an admin policy
+  const clients = await res.json();
+
+  $("clients-loading").hidden = true;
+
+  if (!Array.isArray(clients) || clients.length === 0) {
+    $("empty-state").hidden = false;
+    return;
+  }
+
+  $("client-grid").hidden = false;
+  $("client-grid").innerHTML = clients.map(renderCard).join("");
+  // Attach copy listeners
+  document.querySelectorAll(".btn-copy").forEach(btn => {
+    btn.addEventListener("click", () => {
+      navigator.clipboard.writeText(btn.dataset.url);
+      btn.textContent = "Copied!";
+      setTimeout(() => btn.textContent = "Copy", 1500);
+    });
+  });
+}
+
+function renderCard(c) {
+  const url = `${BASE_URL}/${c.slug}/`;
+  const initial = c.name.charAt(0).toUpperCase();
+  const logoHtml = c.logo_url
+    ? `<img class="client-card-logo" src="${c.logo_url}" alt="">`
+    : `<div class="client-card-logo-placeholder">${initial}</div>`;
+  return `
+    <div class="client-card">
+      <div class="client-card-top">
+        ${logoHtml}
+        <div>
+          <h3>${escHtml(c.name)}${!c.active ? '<span class="badge-inactive">Inactive</span>' : ''}</h3>
+          <div class="slug">${escHtml(c.slug)}</div>
+        </div>
+      </div>
+      <div class="client-url">
+        <span>${escHtml(url)}</span>
+        <button class="btn-copy" data-url="${escHtml(url)}">Copy</button>
+      </div>
+      <div class="client-card-actions">
+        <button class="btn-sm" onclick="openEdit('${escHtml(c.slug)}','${escHtml(c.name)}')">Edit</button>
+        <a href="${escHtml(url)}" target="_blank" class="btn-sm" style="text-decoration:none;">Preview ↗</a>
+      </div>
+    </div>`;
+}
+
+// ── Add / Edit modal ─────────────────────────────────────────
+let editingSlug = null;
+
+$("btn-add-client").addEventListener("click", openAdd);
+$("btn-modal-cancel").addEventListener("click", closeModal);
+$("btn-modal-backdrop") && $("btn-modal-backdrop").addEventListener("click", closeModal);
+
+$("m-name").addEventListener("input", () => {
+  if (!editingSlug) {
+    const slug = $("m-name").value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    $("m-slug").value = slug;
+    $("slug-preview").textContent = slug || "your-client";
+  }
+});
+$("m-slug").addEventListener("input", () => {
+  $("slug-preview").textContent = $("m-slug").value || "your-client";
+});
+
+function openAdd() {
+  editingSlug = null;
+  $("modal-title").textContent = "Add New Client";
+  $("btn-modal-save").textContent = "Create Client";
+  $("m-name").value = "";
+  $("m-slug").value = "";
+  $("m-logo").value = "";
+  $("slug-preview").textContent = "your-client";
+  $("slug-group").hidden = false;
+  $("modal-error").hidden = true;
+  $("modal-backdrop").hidden = false;
+}
+
+function openEdit(slug, name) {
+  editingSlug = slug;
+  $("modal-title").textContent = "Edit Client";
+  $("btn-modal-save").textContent = "Save Changes";
+  $("m-name").value = name;
+  $("m-slug").value = slug;
+  $("slug-group").hidden = true;
+  $("modal-error").hidden = true;
+  $("modal-backdrop").hidden = false;
+}
+
+function closeModal() { $("modal-backdrop").hidden = true; }
+
+$("btn-modal-save").addEventListener("click", async () => {
+  const name = $("m-name").value.trim();
+  const slug = $("m-slug").value.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
+  const logoFile = $("m-logo").files[0];
+
+  if (!name) { showModalError("Client name is required."); return; }
+  if (!editingSlug && !slug) { showModalError("URL slug is required."); return; }
+
+  const btn = $("btn-modal-save");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving…';
+  $("modal-error").hidden = true;
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const fd = new FormData();
+    fd.append("name", name);
+    if (editingSlug) {
+      fd.append("slug", editingSlug);
+    } else {
+      fd.append("slug", slug);
+    }
+    if (logoFile) fd.append("logo", logoFile);
+
+    const fnName = editingSlug ? "update-client" : "add-client";
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: fd,
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || "Unknown error");
+
+    closeModal();
+    loadClients();
+  } catch (e) {
+    showModalError(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = editingSlug ? "Save Changes" : "Create Client";
+  }
+});
+
+function showModalError(msg) {
+  const el = $("modal-error");
+  el.textContent = msg;
+  el.hidden = false;
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+</script>
+</body>
+</html>
