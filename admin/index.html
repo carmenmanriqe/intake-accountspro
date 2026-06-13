@@ -258,12 +258,12 @@ const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const ADMIN_EMAIL   = "carmen@accountspro.net";
 const BASE_URL      = "https://intake.accountspro.net";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 const $ = id => document.getElementById(id);
 
 // ── Auth ─────────────────────────────────────────────────────
 $("btn-google-signin").addEventListener("click", async () => {
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { error } = await db.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo: window.location.href }
   });
@@ -271,14 +271,14 @@ $("btn-google-signin").addEventListener("click", async () => {
 });
 
 $("btn-signout").addEventListener("click", async () => {
-  await supabase.auth.signOut();
+  await db.auth.signOut();
   location.reload();
 });
 
-supabase.auth.onAuthStateChange(async (event, session) => {
+db.auth.onAuthStateChange(async (event, session) => {
   if (!session) { showLogin(); return; }
   if (session.user.email !== ADMIN_EMAIL) {
-    await supabase.auth.signOut();
+    await db.auth.signOut();
     showLoginError("Access denied. Only the admin account may log in.");
     return;
   }
@@ -307,7 +307,7 @@ async function loadClients() {
   $("client-grid").hidden = true;
   $("empty-state").hidden = true;
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await db.auth.getSession();
   const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*&order=created_at.desc`, {
     headers: {
       apikey: SUPABASE_ANON,
@@ -421,7 +421,7 @@ $("btn-modal-save").addEventListener("click", async () => {
   $("modal-error").hidden = true;
 
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await db.auth.getSession();
     const fd = new FormData();
     fd.append("name", name);
     if (editingSlug) {
