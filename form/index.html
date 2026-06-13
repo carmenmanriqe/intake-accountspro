@@ -248,8 +248,7 @@
 const SUPABASE_URL  = "https://nkjuodujynwddnqfigtg.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ranVvZHVqeW53ZGRucWZpZ3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1ODk4MjksImV4cCI6MjA5NjE2NTgyOX0.RdKe1RLGmASdf3ip8_IH19pINuVjU6jkyZAWU41FqAU";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 // ── State ─────────────────────────────────────────────────────
 const params     = new URLSearchParams(location.search);
 const clientSlug = params.get("client") || location.pathname.split("/").filter(Boolean)[0];
@@ -265,7 +264,7 @@ function hide(id)  { $(id).hidden = true;  }
 (async () => {
   if (!clientSlug) { hide("loading-state"); show("not-found-state"); return; }
 
-  const { data: branding } = await supabase.rpc("client_branding", { p_slug: clientSlug });
+  const { data: branding } = db.rpc("client_branding", { p_slug: clientSlug });
 
   hide("loading-state");
 
@@ -347,7 +346,7 @@ async function upload() {
     const path     = `${clientSlug}/${Date.now()}-${safeName}`;
 
     // Storage upload
-    const { error: upErr } = await supabase.storage
+    const { error: upErr } = await db.storage(
       .from("client-docs")
       .upload(path, file, {
         contentType: file.type || "application/octet-stream",
@@ -364,7 +363,7 @@ async function upload() {
     }
 
     // DB row — INSERT only, no .select() needed under insert-only RLS
-    const { error: dbErr } = await supabase
+    const { error: dbErr } = await db
       .from("submissions")
       .insert({
         client_slug:       clientSlug,
